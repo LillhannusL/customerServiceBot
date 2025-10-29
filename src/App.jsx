@@ -18,18 +18,26 @@ function App() {
 			//hämta text från input
 			const question = inputRef.current.value;
 			console.log('fråga: ', question);
-			inputRef.current.value = '';
 
 			//lägga användarens fråga i chathistoriken
 			setMessages((prevState) => {
 				return [...prevState, { role: 'user', content: question }];
 			});
+			inputRef.current.value = '';
 
-			const answer = await chain.invoke({ question });
+			const lastFiveMessages = [
+				...messages,
+				{ role: 'user', content: question },
+			].slice(-5);
+
+			const answer = await chain.invoke({
+				question,
+				chatHistory: lastFiveMessages ?? [],
+			});
 			console.log(answer);
 
 			setMessages((prevState) => {
-				return [...prevState, { role: 'assistant', content: answer }];
+				return [...prevState, { role: 'KundtjänstBot', content: answer }];
 			});
 		}
 	}
@@ -44,7 +52,11 @@ function App() {
 		<main className="chat">
 			<section className="chat__messages">{messageComponent}</section>
 			<form className="chat__form">
-				<input type="text" ref={inputRef} />
+				<input
+					type="text"
+					ref={inputRef}
+					placeholder="Skriv din fråga här..."
+				/>
 				<button onClick={sendAnswer} onKeyUp={sendAnswer}>
 					Fråga
 				</button>
