@@ -1,8 +1,12 @@
 import './App.css';
 import { useRef, useState, useEffect } from 'react';
-
 import { chain } from './Utils/chains.js';
-
+import {
+	memory,
+	addUserMessage,
+	addAiMessage,
+	getChatHistory,
+} from './Utils/memory.js';
 import Message from './Components/Message.jsx';
 
 function App() {
@@ -14,33 +18,31 @@ function App() {
 	async function sendAnswer(e) {
 		e.preventDefault();
 
-		if (e.type === 'click' || e.key === 'enter') {
-			//hämta text från input
-			const question = inputRef.current.value;
-			console.log('fråga: ', question);
+		//hämta text från input
+		const question = inputRef.current.value;
+		console.log('fråga: ', question);
+		if (!question) return;
 
-			//lägga användarens fråga i chathistoriken
-			setMessages((prevState) => {
-				return [...prevState, { role: 'user', content: question }];
-			});
-			inputRef.current.value = '';
+		//lägga användarens fråga i chathistoriken
+		setMessages((prevState) => {
+			return [...prevState, { role: 'user', content: question }];
+		});
+		await addUserMessage(question);
+		inputRef.current.value = '';
 
-			const lastFiveMessages = [
-				...messages,
-				{ role: 'user', content: question },
-			].slice(-5);
+		const answer = await chain.invoke({ question, memory });
+		console.log(answer);
 
-			const answer = await chain.invoke({
-				question,
-				chatHistory: lastFiveMessages ?? [],
-			});
-			console.log(answer);
+		setMessages((prevState) => {
+			return [...prevState, { role: 'KundtjänstBot', content: answer }];
+		});
+		await addAiMessage(answer);
 
-			setMessages((prevState) => {
-				return [...prevState, { role: 'KundtjänstBot', content: answer }];
-			});
-		}
+		const updatedMessages = await getChatHistory();
+		setMessages(updatedMessages);
+		console.log('memory: ', memory);
 	}
+
 	//message component
 	const messageComponent = messages.map((message, index) => {
 		return (
