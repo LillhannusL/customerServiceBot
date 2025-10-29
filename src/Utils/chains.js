@@ -4,6 +4,7 @@ import {
 } from '@langchain/core/runnables';
 import { ChatOllama } from '@langchain/ollama';
 import { StringOutputParser } from '@langchain/core/output_parsers';
+import { memory } from './memory.js';
 
 import { retriveDocuments } from './setUpReciver';
 import { standAloneQuestionTemplate, answerTemplate } from './promptTemplates';
@@ -37,20 +38,15 @@ const retriveDocumentsChain = RunnableSequence.from([
 	combineDocuments,
 ]);
 
-// 3. Ställ den ursprungliga frågan till språkmodellen och skicka med data från Supabase som kontext, input: question + context output: modellens svar
 const answerChain = RunnableSequence.from([
-	//kombinera frågan och contexten i answerTemplate
-	(data) => ({
-		question: data.question,
-		context: data.context,
-		chatHistory: data.chatHistory
-			? data.chatHistory
-					.map(
-						(m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
-					)
-					.join('\n')
-			: '',
-	}),
+	async (data) => {
+		console.log(data);
+		const chatHistoryArray = await memory.chatHistory.getMessages();
+		const chatHistory = chatHistoryArray
+			.map((msg) => `${msg.role}: ${msg.content}`)
+			.join('\n');
+		return { ...data, chatHistory };
+	},
 	answerTemplate,
 	llm,
 	new StringOutputParser(),
