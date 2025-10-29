@@ -40,13 +40,19 @@ const retriveDocumentsChain = RunnableSequence.from([
 // 3. Ställ den ursprungliga frågan till språkmodellen och skicka med data från Supabase som kontext, input: question + context output: modellens svar
 const answerChain = RunnableSequence.from([
 	//kombinera frågan och contexten i answerTemplate
-	(data) => {
-		console.log(data);
-		return data;
-	},
+	(data) => ({
+		question: data.question,
+		context: data.context,
+		chatHistory: data.chatHistory
+			? data.chatHistory
+					.map(
+						(m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
+					)
+					.join('\n')
+			: '',
+	}),
 	answerTemplate,
 	llm,
-	//stringOutputParser, för att få ren text
 	new StringOutputParser(),
 ]);
 
