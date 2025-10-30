@@ -1,3 +1,30 @@
 .message {
-	color: red;
+	display: flex;
+}
+
+.message.user {
+	justify-content: flex-end;
+}
+
+.message.bot {
+	justify-content: flex-start;
+}
+
+.message__bubble {
+	max-width: 70%;
+	padding: 1rem;
+	border-radius: 10px;
+	box-shadow: 2px 5px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message.user .message__bubble {
+	background-color: #70a9c5;
+}
+
+.message.bot .message__bubble {
+	background-color: #c2d4e2;
+}
+
+.role {
+	color: #427b98;
 }
