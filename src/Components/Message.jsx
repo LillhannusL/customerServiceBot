@@ -1,8 +1,6 @@
 import './Message.css';
 
-//hämta props; content, role
 function Message({ content, role }) {
-	//skapa är egetMeddelande, sätt de till role och kolla om det är "user"
 	const isOwnMessage = role === 'user';
 
 	return (

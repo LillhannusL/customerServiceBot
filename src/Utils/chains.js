@@ -9,7 +9,6 @@ import { classifyQuestion } from './classifyQuestion.js';
 import { retrieveDocuments } from './setUpReciver';
 import { standaloneQuestionTemplate, answerTemplate } from './promptTemplates';
 
-//hämta modell
 const llm = new ChatOllama({
 	model: 'llama3.1:8b',
 });
@@ -39,7 +38,7 @@ const retrieveDocumentsChain = RunnableSequence.from([
 	combineDocuments,
 ]);
 
-//generar svar med chathistory och category
+//generar svar
 const answerChain = RunnableSequence.from([
 	async (data) => {
 		console.log('input till answerChain: ', data);

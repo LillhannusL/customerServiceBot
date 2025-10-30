@@ -11,7 +11,6 @@ import Message from './Components/Message.jsx';
 import Loading from './Components/Loading.jsx';
 
 function App() {
-	//InputRef och Message,Loading state
 	const inputRef = useRef();
 	const [messages, setMessages] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +21,6 @@ function App() {
 		});
 	}, [messages]);
 
-	//sendAnswer Fuktion
 	async function sendAnswer(e) {
 		e.preventDefault();
 
@@ -53,7 +51,6 @@ function App() {
 		setIsLoading(false);
 	}
 
-	//message component
 	const messageComponent = messages.map((message, index) => {
 		return (
 			<Message content={message.content} role={message.role} key={index} />
