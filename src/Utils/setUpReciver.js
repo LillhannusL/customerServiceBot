@@ -19,6 +19,6 @@ const vectorstore = new SupabaseVectorStore(embedding, {
 });
 
 //hämta document
-const retriveDocuments = vectorstore.asRetriever();
+const retrieveDocuments = vectorstore.asRetriever();
 
-export { retriveDocuments };
+export { retrieveDocuments };

@@ -5,9 +5,9 @@ import {
 import { ChatOllama } from '@langchain/ollama';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { memory } from './memory.js';
-
-import { retriveDocuments } from './setUpReciver';
-import { standAloneQuestionTemplate, answerTemplate } from './promptTemplates';
+import { classifyQuestion } from './classifyQuestion.js';
+import { retrieveDocuments } from './setUpReciver';
+import { standaloneQuestionTemplate, answerTemplate } from './promptTemplates';
 
 //hämta modell
 const llm = new ChatOllama({
@@ -18,34 +18,43 @@ function combineDocuments(docs) {
 	return docs.map((doc) => doc.pageContent).join('\n\n');
 }
 
-// 1. Gör frågan till en fristående fråga, input: användarens fråga, output: standaloneQuestion
+// Gör frågan till en fristående fråga, input: användarens fråga, output: standaloneQuestion
 const standAloneQuestionChain = RunnableSequence.from([
-	standAloneQuestionTemplate,
+	(data) => {
+		console.log('SAQ data: ', data);
+		return data;
+	},
+	standaloneQuestionTemplate,
 	llm,
 	new StringOutputParser(),
 ]);
 
-// 2. Hämta data från Supabase baserat på den fristående frågan, input: standAloneQuestion, output: context
-const retriveDocumentsChain = RunnableSequence.from([
-	//ta emot standalonequestion som input
+//Hämta data från Supabase baserat på den fristående frågan, input: standAloneQuestion, output: context
+const retrieveDocumentsChain = RunnableSequence.from([
 	(data) => {
 		console.log(data);
 		return data.standAloneQuestion;
 	},
-	//skicka frågan till en retriver
-	retriveDocuments,
-	//kombinera resultatet till ett doc
+	retrieveDocuments,
 	combineDocuments,
 ]);
 
+//generar svar med chathistory och category
 const answerChain = RunnableSequence.from([
 	async (data) => {
-		console.log(data);
+		console.log('input till answerChain: ', data);
+		//hämtar chatHistory
 		const chatHistoryArray = await memory.chatHistory.getMessages();
 		const chatHistory = chatHistoryArray
 			.map((msg) => `${msg.role}: ${msg.content}`)
 			.join('\n');
 		return { ...data, chatHistory };
+	},
+	{
+		question: ({ question }) => question,
+		context: ({ context }) => context,
+		category: ({ category }) => category,
+		chatHistory: ({ chatHistory }) => chatHistory,
 	},
 	answerTemplate,
 	llm,
@@ -54,15 +63,20 @@ const answerChain = RunnableSequence.from([
 
 export const chain = RunnableSequence.from([
 	(data) => {
-		console.log(data);
+		console.log('input chain data: ', data);
 		return data;
 	},
 	{
 		standAloneQuestion: standAloneQuestionChain,
 		originalQuestion: new RunnablePassthrough(),
 	},
+	classifyQuestion,
+	(data) => {
+		console.log('efter classifyQuestion: ', data);
+		return data;
+	},
 	{
-		context: retriveDocumentsChain,
+		context: retrieveDocumentsChain,
 		question: ({ originalQuestion }) => originalQuestion.question,
 	},
 	answerChain,
